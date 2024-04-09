@@ -148,13 +148,22 @@ exports.getFileName = function getFileName(calling_file) {
   var origPST = Error.prepareStackTrace,
     origSTL = Error.stackTraceLimit,
     dummy = {},
-    fileName;
+    fileName,
+    fileSchema = 'file://';
+
 
   Error.stackTraceLimit = 10;
 
   Error.prepareStackTrace = function(e, st) {
     for (var i = 0, l = st.length; i < l; i++) {
       fileName = st[i].getFileName();
+
+      // if the mode is esm, the filename will be a URL
+      // so we need convert it to a path in order to compare with __dirname
+      if (fileName.indexOf(fileSchema) === 0) {
+        fileName = fileURLToPath(fileName);
+      }
+
       if (fileName !== __filename) {
         if (calling_file) {
           if (fileName !== calling_file) {
@@ -176,7 +185,6 @@ exports.getFileName = function getFileName(calling_file) {
   Error.stackTraceLimit = origSTL;
 
   // handle filename that starts with "file://"
-  var fileSchema = 'file://';
   if (fileName.indexOf(fileSchema) === 0) {
     fileName = fileURLToPath(fileName);
   }
